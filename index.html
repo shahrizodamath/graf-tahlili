@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Graf tahlilchisi: markaziylik ko’rsatkichlari</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--tx:#1a2133;--mu:#5f6b82;--bd:#dde2ec;--ac:#2f4bd0;--edge:rgba(100,116,139,.35);--nd:#94a3b8;--c1:#e11d48;--c2:#f59e0b;--c3:#10b981;--c4:#8b5cf6;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f121b;--card:#181d2a;--tx:#e8ebf4;--mu:#97a1b8;--bd:#2b3246;--ac:#8aa0ff;--edge:rgba(148,163,184,.28);--nd:#667389;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f121b;--card:#181d2a;--tx:#e8ebf4;--mu:#97a1b8;--bd:#2b3246;--ac:#8aa0ff;--edge:rgba(148,163,184,.28);--nd:#667389;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:16px 16px 0;max-width:1500px;margin:auto}
+h1{margin:0;font-size:1.5rem;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--mu)}
+.app{display:grid;grid-template-columns:350px minmax(0,1fr);gap:14px;padding:14px 16px 24px;max-width:1500px;margin:auto}
+@media(max-width:920px){.app{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px}
+h2{margin:0 0 8px;font-size:1rem}
+small,.hint{color:var(--mu);font-size:.82rem}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+button,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.tab{flex:1}.tab.on,.pri{background:var(--ac);color:var(--card);border-color:var(--ac)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.row select{flex:1;min-width:0}
+input[type=file]{max-width:100%}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.st div{border:1px solid var(--bd);border-radius:7px;padding:6px 8px}
+.st b{display:block;font-size:1.15rem}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th,td{padding:4px 3px;text-align:right;border-bottom:1px solid var(--bd)}
+th:nth-child(2),td:nth-child(2){text-align:left;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.on{background:color-mix(in srgb,var(--ac) 16%,transparent)}
+tbody tr{cursor:pointer}
+#ld{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:1100px){#ld{grid-template-columns:1fr 1fr}}
+.ld{background:var(--card);border:1px solid var(--bd);border-left:7px solid var(--c);border-radius:10px;padding:10px 12px;min-width:0}
+.ld small{display:block}
+.ld b{display:block;font-size:1.6rem;line-height:1.15;overflow-wrap:anywhere}
+.ld span{font-variant-numeric:tabular-nums;color:var(--c);font-weight:600}
+.ld em{display:block;font-size:.78rem;color:var(--mu);font-style:normal}
+.gw{position:relative}
+#cv{display:block;width:100%;height:62vh;min-height:380px;border-radius:8px;background:var(--bg);touch-action:none}
+#tip{position:absolute;pointer-events:none;background:var(--tx);color:var(--card);padding:3px 8px;border-radius:6px;font-size:.8rem;white-space:nowrap}
+#msg{min-height:1.3em;color:var(--ac);font-size:.88rem;margin:4px 0 0}
+details{font-size:.84rem;color:var(--mu)}
+</style>
+</head>
+<body>
+<header><h1>Graflarda markaziylik ko’rsatkichlari</h1><p>Ijtimoiy tarmoqlarni tahlil qilish uchun interaktiv vosita</p></header>
+<div class="app">
+<div class="col">
+ <section class="card"><h2>1. Ma’lumot manbai</h2>
+  <div class="tabs"><button class="tab on" data-t="0">Tayyor graflar</button><button class="tab" data-t="1">CSV fayl</button><button class="tab" data-t="2">TXT fayl</button></div>
+  <div class="pn" id="p0"><div class="row"><select id="pre" aria-label="Tayyor graf">
+   <option value="karate">Zachary karate klubi (34 tugun)</option><option value="lesmis">Les Misérables qahramonlari (77)</option><option value="flor">Florensiya oilalari (15)</option><option value="ba">Barabási–Albert tarmog’i (200, sintetik)</option></select><button class="pri" id="go">Yuklash</button></div>
+   <p class="hint">Bu graflar sahifaga joylangan. SNAP (snap.stanford.edu) saytidan yuklab olgan faylingizni “TXT fayl” bo’limi orqali yuklang.</p></div>
+  <div class="pn" id="p1" hidden><p class="hint">Har bir qatorda ikki ustun: kim, kimni o’qiydi (kuzatadi).</p><input type="file" id="f1" accept=".csv,text/csv,text/plain"></div>
+  <div class="pn" id="p2" hidden><p class="hint">Har bir qatorda ikkita tugun. SNAP formati qo’llab-quvvatlanadi (# bilan boshlangan izohlar o’tkazib yuboriladi).</p><input type="file" id="f2" accept=".txt,text/plain"></div>
+  <p class="hint">Eng ko’pi bilan 700 tugun: undan ko’p bo’lsa, eng ko’p bog’langan 700 tasi olinadi. Graf yo’nalishsiz hisoblanadi.</p>
+  <p id="msg" role="status"></p></section>
+ <section class="card"><h2>2. Graf ko’rsatkichlari</h2><div class="st" id="st"></div><small>O’chirishdan keyin asl grafdagi qiymat qavsda ko’rsatiladi.</small></section>
+ <section class="card"><h2>3. Tugunlarni o’chirish simulyatsiyasi</h2>
+  <p class="hint">Jadvaldan yoki graf ustidan tugunlarni bosib tanlang, so’ng o’chiring.</p>
+  <div class="row"><button id="top3">Top-3 ni tanlash</button><button class="pri" id="del">Tanlanganlarni o’chirish</button><button id="rst">Asl grafni tiklash</button></div>
+  <p class="hint" id="cnt">Tanlangan: 0</p>
+  <table><thead><tr><th></th><th>Tugun</th><th>Daraja</th><th>Oraliq</th><th>Yaqin</th><th>Xos v.</th></tr></thead><tbody id="tb"></tbody></table>
+  <details><summary>Formulalar</summary>
+   <p>Daraja: C<sub>D</sub>(v) = deg(v)/(n−1).<br>Oraliqlik: C<sub>B</sub>(v) = Σ σ<sub>st</sub>(v)/σ<sub>st</sub>, (n−1)(n−2) ga normallangan (Brandes algoritmi).<br>Yaqinlik: C<sub>C</sub>(v) = (n−1)/Σ d(v,u); uzilgan graflarda Wasserman–Faust tuzatmasi bilan.<br>Xos vektor: Ax = λx, eng katta λ ga mos vektor (daraja iteratsiyasi).</p></details>
+ </section>
+</div>
+<div class="col">
+ <div id="ld"></div>
+ <section class="card"><div class="row"><h2 style="margin:0;flex:1">Graf</h2><label class="hint" for="met">Tugun o’lchami va jadval tartibi:</label><select id="met" style="flex:0 1 auto"></select></div>
+  <div class="gw"><canvas id="cv" aria-label="Graf tasviri"></canvas><div id="tip" hidden></div></div>
+  <p class="hint">G’ildirak yoki ikki barmoq: masshtab. Sudrash: siljitish. Tugunni bosish: o’chirish uchun tanlash. Rangli tugunlar: to’rtta ko’rsatkich bo’yicha yetakchilar.</p></section>
+</div>
+</div>
+<script>
+const SETS={"karate":{"labels":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34"],"edges":[[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,10],[0,11],[0,12],[0,13],[0,17],[0,19],[0,21],[0,31],[1,2],[1,3],[1,7],[1,13],[1,17],[1,19],[1,21],[1,30],[2,3],[2,7],[2,8],[2,9],[2,13],[2,27],[2,28],[2,32],[3,7],[3,12],[3,13],[4,6],[4,10],[5,6],[5,10],[5,16],[6,16],[8,30],[8,32],[8,33],[9,33],[13,33],[14,32],[14,33],[15,32],[15,33],[18,32],[18,33],[19,33],[20,32],[20,33],[22,32],[22,33],[23,25],[23,27],[23,29],[23,32],[23,33],[24,25],[24,27],[24,31],[25,31],[26,29],[26,33],[27,33],[28,31],[28,33],[29,32],[29,33],[30,32],[30,33],[31,32],[31,33],[32,33]]},"lesmis":{"labels":["Napoleon","Myriel","MlleBaptistine","MmeMagloire","CountessDeLo","Geborand","Champtercier","Cravatte","Count","OldMan","Valjean","Labarre","Marguerite","MmeDeR","Isabeau","Gervais","Listolier","Tholomyes","Fameuil","Blacheville","Favourite","Dahlia","Zephine","Fantine","MmeThenardier","Thenardier","Cosette","Javert","Fauchelevent","Bamatabois","Perpetue","Simplice","Scaufflaire","Woman1","Judge","Champmathieu","Brevet","Chenildieu","Cochepaille","Pontmercy","Boulatruelle","Eponine","Anzelma","Woman2","MotherInnocent","Gribier","MmeBurgon","Jondrette","Gavroche","Gillenormand","Magnon","MlleGillenormand","MmePontmercy","MlleVaubois","LtGillenormand","Marius","BaronessT","Mabeuf","Enjolras","Combeferre","Prouvaire","Feuilly","Courfeyrac","Bahorel","Bossuet","Joly","Grantaire","MotherPlutarch","Gueulemer","Babet","Claquesous","Montparnasse","Toussaint","Child1","Child2","Brujon","MmeHucheloup"],"edges":[[0,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[2,3],[2,10],[3,10],[10,11],[10,12],[10,13],[10,14],[10,15],[10,23],[10,24],[10,25],[10,26],[10,27],[10,28],[10,29],[10,31],[10,32],[10,33],[10,34],[10,35],[10,36],[10,37],[10,38],[10,43],[10,44],[10,48],[10,49],[10,51],[10,55],[10,58],[10,64],[10,68],[10,69],[10,70],[10,71],[10,72],[12,23],[16,17],[16,18],[16,19],[16,20],[16,21],[16,22],[16,23],[17,18],[17,19],[17,20],[17,21],[17,22],[17,23],[17,26],[17,55],[18,19],[18,20],[18,21],[18,22],[18,23],[19,20],[19,21],[19,22],[19,23],[20,21],[20,22],[20,23],[21,22],[21,23],[22,23],[23,24],[23,25],[23,27],[23,29],[23,30],[23,31],[24,25],[24,26],[24,27],[24,41],[24,42],[24,50],[24,68],[24,69],[24,70],[25,26],[25,27],[25,39],[25,40],[25,41],[25,42],[25,48],[25,55],[25,68],[25,69],[25,70],[25,71],[25,75],[26,27],[26,43],[26,49],[26,51],[26,54],[26,55],[26,72],[27,28],[27,29],[27,31],[27,33],[27,43],[27,48],[27,58],[27,68],[27,69],[27,70],[27,71],[27,72],[28,44],[28,45],[29,34],[29,35],[29,36],[29,37],[29,38],[30,31],[34,35],[34,36],[34,37],[34,38],[35,36],[35,37],[35,38],[36,37],[36,38],[37,38],[39,52],[39,55],[41,42],[41,55],[41,57],[41,62],[41,68],[41,69],[41,70],[41,71],[41,75],[46,47],[46,48],[48,55],[48,57],[48,58],[48,59],[48,60],[48,61],[48,62],[48,63],[48,64],[48,65],[48,66],[48,68],[48,69],[48,71],[48,73],[48,74],[48,75],[48,76],[49,50],[49,51],[49,54],[49,55],[49,56],[51,52],[51,53],[51,54],[51,55],[54,55],[55,56],[55,57],[55,58],[55,59],[55,61],[55,62],[55,63],[55,64],[55,65],[57,58],[57,59],[57,61],[57,62],[57,63],[57,64],[57,65],[57,67],[58,59],[58,60],[58,61],[58,62],[58,63],[58,64],[58,65],[58,66],[58,70],[58,76],[59,60],[59,61],[59,62],[59,63],[59,64],[59,65],[59,66],[60,61],[60,62],[60,63],[60,64],[60,65],[60,66],[61,62],[61,63],[61,64],[61,65],[61,66],[62,63],[62,64],[62,65],[62,66],[62,76],[63,64],[63,65],[63,66],[63,76],[64,65],[64,66],[64,76],[65,66],[65,76],[66,76],[68,69],[68,70],[68,71],[68,75],[69,70],[69,71],[69,75],[70,71],[70,75],[71,75],[73,74]]},"flor":{"labels":["Acciaiuoli","Medici","Castellani","Peruzzi","Strozzi","Barbadori","Ridolfi","Tornabuoni","Albizzi","Salviati","Pazzi","Bischeri","Guadagni","Ginori","Lamberteschi"],"edges":[[0,1],[1,5],[1,6],[1,7],[1,8],[1,9],[2,3],[2,4],[2,5],[3,4],[3,11],[4,6],[4,11],[6,7],[7,12],[8,13],[8,12],[9,10],[11,12],[12,14]]}};
+const M4=[["deg","Daraja markaziyligi","Degree","--c1"],["bet","Oraliqlik markaziyligi","Betweenness","--c2"],["clo","Yaqinlik markaziyligi","Closeness","--c3"],["eig","Xos vektor markaziyligi","Eigenvector","--c4"]];
+const $=s=>document.querySelector(s),cv=$("#cv"),ctx=cv.getContext("2d"),esc=s=>String(s).replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
+let names=[],E=[],N=0,rem=new Set(),sel=new Set(),R=null,base=null,all=[],live=[],links=[],sim=null,T=d3.zoomIdentity,metric="deg",col={},lc=new Map(),dpr=1;
+const msg=s=>$("#msg").textContent=s;
+function cols(){const s=getComputedStyle(document.documentElement);["edge","nd","tx","card","c1","c2","c3","c4"].forEach(k=>col[k]=s.getPropertyValue("--"+k).trim());}
+function compute(){
+ const al=[];for(let i=0;i<N;i++)if(!rem.has(i))al.push(i);
+ const n=al.length,id=new Map(al.map((v,k)=>[v,k])),adj=al.map(()=>[]);let m=0;
+ for(const[a,b]of E){const x=id.get(a),y=id.get(b);if(x!==undefined&&y!==undefined){adj[x].push(y);adj[y].push(x);m++;}}
+ const bet=new Float64Array(n),clo=new Float64Array(n),seen=new Uint8Array(n);let comps=0,big=0;
+ for(let s=0;s<n;s++){
+  const d=new Int32Array(n).fill(-1),sg=new Float64Array(n),dl=new Float64Array(n),Q=[s];d[s]=0;sg[s]=1;let sum=0;
+  for(let h=0;h<Q.length;h++){const v=Q[h];for(const w of adj[v]){if(d[w]<0){d[w]=d[v]+1;Q.push(w);sum+=d[w];}if(d[w]===d[v]+1)sg[w]+=sg[v];}}
+  const r=Q.length;clo[s]=r>1?(r-1)*(r-1)/((n-1)*sum):0;
+  for(let i=r-1;i>0;i--){const w=Q[i];for(const v of adj[w])if(d[v]===d[w]-1)dl[v]+=sg[v]/sg[w]*(1+dl[w]);bet[w]+=dl[w];}
+  if(!seen[s]){comps++;big=Math.max(big,r);Q.forEach(q=>seen[q]=1);}
+ }
+ let x=new Float64Array(n).fill(1);
+ for(let t=0;t<200;t++){const y=new Float64Array(n);let q=0;for(let i=0;i<n;i++){let a=x[i];for(const j of adj[i])a+=x[j];y[i]=a;q+=a*a;}q=Math.sqrt(q)||1;for(let i=0;i<n;i++)y[i]/=q;x=y;}
+ const v={deg:new Float64Array(N),bet:new Float64Array(N),clo:new Float64Array(N),eig:new Float64Array(N)},bn=n>2?(n-1)*(n-2):1;
+ al.forEach((o,k)=>{v.deg[o]=adj[k].length/(n-1||1);v.bet[o]=bet[k]/bn;v.clo[o]=clo[k];v.eig[o]=x[k];});
+ const lead={},mx={};
+ for(const k in v){let b=null;for(const o of al)if(b===null||v[k][o]>v[k][b])b=o;lead[k]=b;mx[k]=b===null?1:(v[k][b]||1);}
+ return{al,n,m,comps,big,dens:n>1?2*m/(n*(n-1)):0,v,lead,mx};
+}
+function parse(txt){
+ const id=new Map(),lab=[],ed=[],seen=new Set();
+ const gi=s=>{if(!id.has(s)){id.set(s,lab.length);lab.push(s);}return id.get(s);};
+ let first=true;
+ for(const ln of txt.split(/\r?\n/)){
+  const t=ln.trim();if(!t||/^[#%]/.test(t)||t.startsWith("//"))continue;
+  const p=t.split(/[\s,;]+/).map(s=>s.replace(/^"|"$/g,"")).filter(Boolean);if(p.length<2)continue;
+  if(first){first=false;if(/^(source|src|from|follower|u|node1|id)$/i.test(p[0])&&/^(target|dst|to|followee|v|node2|id)$/i.test(p[1]))continue;}
+  const a=gi(p[0]),b=gi(p[1]);if(a===b)continue;const k=a<b?a+"_"+b:b+"_"+a;if(seen.has(k))continue;seen.add(k);ed.push([a,b]);
+ }
+ return{lab,ed};
+}
+function ba(n,m){const lab=[],ed=[],pool=[];for(let i=0;i<n;i++){lab.push("v"+(i+1));if(i<=m){for(let j=0;j<i;j++){ed.push([i,j]);pool.push(i,j);}}else{const t=new Set();while(t.size<m)t.add(pool[Math.random()*pool.length|0]);t.forEach(j=>{ed.push([i,j]);pool.push(i,j);});}}return{labels:lab,edges:ed};}
+function load(lab,ed){
+ let note="Graf yuklandi: "+lab.length+" tugun, "+ed.length+" qirra.";
+ if(lab.length>700){
+  const dg=new Array(lab.length).fill(0);ed.forEach(([a,b])=>{dg[a]++;dg[b]++;});
+  const keep=lab.map((_,i)=>i).sort((a,b)=>dg[b]-dg[a]).slice(0,700),mp=new Map(keep.map((v,k)=>[v,k]));
+  ed=ed.filter(([a,b])=>mp.has(a)&&mp.has(b)).map(([a,b])=>[mp.get(a),mp.get(b)]);lab=keep.map(i=>lab[i]);
+  note="Fayldagi tugunlar soni 700 dan ko’p edi: eng ko’p bog’langan 700 tasi olindi.";
+ }
+ names=lab;E=ed;N=lab.length;rem=new Set();sel=new Set();base=compute();
+ if(sim)sim.stop();
+ all=names.map((_,i)=>({id:i}));live=all;
+ sim=d3.forceSimulation(all).force("link",d3.forceLink().id(d=>d.id).distance(28).strength(.6)).force("charge",d3.forceManyBody().strength(-35).distanceMax(250)).force("x",d3.forceX(cv.clientWidth/2).strength(.05)).force("y",d3.forceY(cv.clientHeight/2).strength(.05)).on("tick",draw);
+ d3.select(cv).call(zoom.transform,d3.zoomIdentity);
+ refresh();msg(note);
+}
+function refresh(){
+ R=compute();live=all.filter(n=>!rem.has(n.id));
+ links=E.filter(([a,b])=>!rem.has(a)&&!rem.has(b)).map(([a,b])=>({source:a,target:b}));
+ sim.nodes(live);sim.force("link").links(links);sim.alpha(.7).restart();
+ lc=new Map();M4.forEach(([k,,,c])=>{const i=R.lead[k];if(i!=null){if(!lc.has(i))lc.set(i,[]);lc.get(i).push(c.slice(2));}});
+ $("#ld").innerHTML=M4.map(([k,nm,en,c])=>{const i=R.lead[k];return`<div class="ld" style="--c:var(${c})"><small>${nm} (${en})</small><b>${i==null?"—":esc(names[i])}</b><span>${i==null?"":R.v[k][i].toFixed(4)}</span>${rem.size?`<em>Asl grafda: ${esc(names[base.lead[k]])}</em>`:""}</div>`;}).join("");
+ const o=rem.size>0,f=(a,b)=>a+(o?` <small>(${b})</small>`:"");
+ $("#st").innerHTML=[["Tugunlar",R.n,N],["Qirralar",R.m,base.m],["Komponentlar",R.comps,base.comps],["Eng katta komponenta",R.big,base.big],["Zichlik",R.dens.toFixed(3),base.dens.toFixed(3)]].map(([a,b,c])=>`<div><small>${a}</small><b>${f(b,c)}</b></div>`).join("");
+ table();
+}
+function table(){
+ const V=R.v[metric],o=R.al.slice().sort((a,b)=>V[b]-V[a]).slice(0,12);
+ sel.forEach(i=>{if(!o.includes(i))o.push(i);});
+ $("#tb").innerHTML=o.map(i=>`<tr data-i="${i}" class="${sel.has(i)?"on":""}"><td><input type="checkbox" aria-label="Tanlash" ${sel.has(i)?"checked":""}></td><td>${esc(names[i])}</td>${M4.map(m=>`<td>${R.v[m[0]][i].toFixed(3)}</td>`).join("")}</tr>`).join("");
+ $("#cnt").textContent="Tanlangan: "+sel.size;
+ draw();
+}
+function toggle(i){sel.has(i)?sel.delete(i):sel.add(i);table();}
+const rad=n=>3+9*Math.sqrt((R.v[metric][n.id]||0)/R.mx[metric]);
+function draw(){
+ if(!R)return;
+ const w=cv.clientWidth,h=cv.clientHeight;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ ctx.translate(T.x,T.y);ctx.scale(T.k,T.k);
+ ctx.strokeStyle=col.edge;ctx.lineWidth=1/T.k;ctx.beginPath();
+ for(const l of links){ctx.moveTo(l.source.x,l.source.y);ctx.lineTo(l.target.x,l.target.y);}
+ ctx.stroke();
+ ctx.fillStyle=col.nd;
+ for(const n of live){if(lc.has(n.id)||sel.has(n.id))continue;ctx.beginPath();ctx.arc(n.x,n.y,rad(n),0,6.2832);ctx.fill();}
+ ctx.font=(12/T.k)+"px system-ui,sans-serif";ctx.lineJoin="round";
+ for(const n of live){
+  const c=lc.get(n.id),s=sel.has(n.id);if(!c&&!s)continue;
+  const r=Math.max(rad(n),c?10:5);
+  if(c){const a=6.2832/c.length;c.forEach((k,i)=>{ctx.fillStyle=col[k];ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.arc(n.x,n.y,r,i*a,(i+1)*a);ctx.fill();});}
+  else{ctx.fillStyle=col.nd;ctx.beginPath();ctx.arc(n.x,n.y,r,0,6.2832);ctx.fill();}
+  ctx.strokeStyle=col.card;ctx.lineWidth=1.5/T.k;ctx.beginPath();ctx.arc(n.x,n.y,r,0,6.2832);ctx.stroke();
+  if(s){ctx.strokeStyle=col.tx;ctx.lineWidth=2.5/T.k;ctx.setLineDash([4/T.k,3/T.k]);ctx.beginPath();ctx.arc(n.x,n.y,r+4,0,6.2832);ctx.stroke();ctx.setLineDash([]);}
+  const t=String(names[n.id]);ctx.lineWidth=3/T.k;ctx.strokeStyle=col.card;ctx.strokeText(t,n.x+r+3,n.y+4/T.k);ctx.fillStyle=col.tx;ctx.fillText(t,n.x+r+3,n.y+4/T.k);
+ }
+}
+function pick(e){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left-T.x)/T.k,y=(e.clientY-r.top-T.y)/T.k;let b=null,bd=1e9;for(const n of live){const d=(n.x-x)**2+(n.y-y)**2;if(d<bd){bd=d;b=n;}}return b&&bd<(Math.max(rad(b),8)+3)**2?b:null;}
+const zoom=d3.zoom().scaleExtent([.2,8]).on("zoom",e=>{T=e.transform;draw();});
+d3.select(cv).call(zoom);
+cv.addEventListener("click",e=>{const n=pick(e);if(n)toggle(n.id);});
+cv.addEventListener("mousemove",e=>{const n=pick(e),t=$("#tip");if(!n||!R){t.hidden=true;return;}const r=cv.getBoundingClientRect();t.hidden=false;t.style.left=(e.clientX-r.left+12)+"px";t.style.top=(e.clientY-r.top+12)+"px";t.textContent=names[n.id]+"  D "+R.v.deg[n.id].toFixed(3)+"  B "+R.v.bet[n.id].toFixed(3)+"  C "+R.v.clo[n.id].toFixed(3)+"  E "+R.v.eig[n.id].toFixed(3);});
+cv.addEventListener("mouseleave",()=>$("#tip").hidden=true);
+function fit(){dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;draw();}
+new ResizeObserver(fit).observe(cv);
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{cols();draw();});
+$("#met").innerHTML=M4.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join("");
+$("#met").onchange=e=>{metric=e.target.value;table();};
+$("#tb").onclick=e=>{const tr=e.target.closest("tr");if(tr)toggle(+tr.dataset.i);};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));document.querySelectorAll(".pn").forEach(p=>p.hidden=p.id!=="p"+b.dataset.t);});
+$("#go").onclick=()=>{const k=$("#pre").value,g=k==="ba"?ba(200,2):SETS[k];load(g.labels.slice(),g.edges.map(e=>e.slice()));};
+["#f1","#f2"].forEach(s=>$(s).onchange=async e=>{const f=e.target.files[0];if(!f)return;const{lab,ed}=parse(await f.text());if(!ed.length){msg("Faylda bog’lanishlar topilmadi. Format: har qatorda ikkita tugun.");return;}load(lab,ed);});
+$("#top3").onclick=()=>{const V=R.v[metric];sel=new Set(R.al.slice().sort((a,b)=>V[b]-V[a]).slice(0,3));table();};
+$("#del").onclick=()=>{if(!sel.size){msg("Avval o’chirish uchun tugunlarni tanlang.");return;}const k=sel.size,nm=[...sel].map(i=>names[i]).join(", ");sel.forEach(i=>rem.add(i));sel=new Set();refresh();msg(k+" ta tugun o’chirildi ("+nm+"). Graf qayta qurildi, yetakchilar qayta hisoblandi.");};
+$("#rst").onclick=()=>{rem=new Set();sel=new Set();refresh();msg("Asl graf tiklandi.");};
+cols();fit();$("#go").click();
+</script>
+</body>
+</html>
