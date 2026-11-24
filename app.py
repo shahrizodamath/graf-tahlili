@@ -13,10 +13,10 @@ import tempfile
 st.set_page_config(page_title="Graf Markaziyligi Analizatori", layout="wide")
 st.title("Graflarda markaziylik ko'rsatkichlari tahlili")
 
-# --- 2. SNAP bazasidagi mavjud graflar ro'yxati ---
+# --- 2. SNAP bazasidagi mavjud graflar ro'yxati (YANGILANGAN HAVOLALAR) ---
 SNAP_DATASETS = {
-    "Kichik: Congress Twitter (475 ta tugun)": "https://snap.stanford.edu/data/congress-twitter.txt.gz",
-    "O'rtacha: Email EU Core (1005 ta tugun)": "https://snap.stanford.edu/data/email-Eu-core.txt.gz",
+    "Kichik: Email EU Core (1005 ta tugun)": "https://snap.stanford.edu/data/email-Eu-core.txt.gz",
+    "O'rtacha: Wiki-Vote (7115 ta tugun)": "https://snap.stanford.edu/data/wiki-Vote.txt.gz",
     "Katta: Twitter Ego (81,000 ta tugun)": "https://snap.stanford.edu/data/twitter_combined.txt.gz"
 }
 
